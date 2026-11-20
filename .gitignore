@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.playwright-mcp/
+playwright-report/
+test-results/
+*.tsbuildinfo
+.pi*/
+..playwright-mcp/
