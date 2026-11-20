@@ -8,8 +8,8 @@ import {
 } from "./core";
 import { packs, shapes, type Pack } from "./shapes";
 import { renderSvg } from "./render";
-import { loadDraft, saveDraft } from './persistence';
-import ExportDialog from './ExportDialog';
+import { loadDraft, saveDraft } from "./persistence";
+import ExportDialog from "./ExportDialog";
 
 function Icon({
 	name,
@@ -96,10 +96,10 @@ function NumberControl({
 	function commit() {
 		const n = Number(text);
 		if (text.trim() && Number.isFinite(n)) {
-      const next = Math.max(min, Math.min(max, Math.round(n / step) * step));
-      setText(String(next));
-      onChange(next);
-    } else setText(String(value));
+			const next = Math.max(min, Math.min(max, Math.round(n / step) * step));
+			setText(String(next));
+			onChange(next);
+		} else setText(String(value));
 	}
 	return (
 		<div className={`number-control ${disabled ? "disabled" : ""}`}>
@@ -144,14 +144,47 @@ function NumberControl({
 		</div>
 	);
 }
-function DimensionInput({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
-  const [text, setText] = useState(String(value));
-  useEffect(() => setText(String(value)), [value]);
-  const commit = () => {
-    const next = text.trim() ? Math.max(2, Math.min(12, Math.round(Number(text)))) : value;
-    if (Number.isFinite(next)) { setText(String(next)); onChange(next); } else setText(String(value));
-  };
-  return <input aria-label={label} type="number" min="2" max="12" value={text} onChange={e => { setText(e.target.value); const n = Number(e.target.value); if (Number.isInteger(n) && n >= 2 && n <= 12) onChange(n); }} onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') { commit(); e.currentTarget.blur(); } }} />;
+function DimensionInput({
+	label,
+	value,
+	onChange,
+}: {
+	label: string;
+	value: number;
+	onChange: (value: number) => void;
+}) {
+	const [text, setText] = useState(String(value));
+	useEffect(() => setText(String(value)), [value]);
+	const commit = () => {
+		const next = text.trim()
+			? Math.max(2, Math.min(12, Math.round(Number(text))))
+			: value;
+		if (Number.isFinite(next)) {
+			setText(String(next));
+			onChange(next);
+		} else setText(String(value));
+	};
+	return (
+		<input
+			aria-label={label}
+			type="number"
+			min="2"
+			max="12"
+			value={text}
+			onChange={(e) => {
+				setText(e.target.value);
+				const n = Number(e.target.value);
+				if (Number.isInteger(n) && n >= 2 && n <= 12) onChange(n);
+			}}
+			onBlur={commit}
+			onKeyDown={(e) => {
+				if (e.key === "Enter") {
+					commit();
+					e.currentTarget.blur();
+				}
+			}}
+		/>
+	);
 }
 function Toggle({
 	label,
@@ -356,28 +389,42 @@ function TileDialog({
 }
 
 export default function App() {
-  const [initial] = useState(loadDraft);
+	const [initial] = useState(loadDraft);
 	const [doc, dispatch] = useReducer(reducer, initial.document);
 	const [selectedTile, setSelectedTile] = useState<string | null>(null);
 	const [zoom, setZoom] = useState(1);
 	const [status, setStatus] = useState(initial.notice);
-  useEffect(() => {
-    const save = () => { const notice = saveDraft(doc); if (notice) setStatus(notice); };
-    const timer = window.setTimeout(save, 350);
-    window.addEventListener('pagehide', save);
-    return () => { window.clearTimeout(timer); window.removeEventListener('pagehide', save); };
-  }, [doc]);
+	useEffect(() => {
+		const save = () => {
+			const notice = saveDraft(doc);
+			if (notice) setStatus(notice);
+		};
+		const timer = window.setTimeout(save, 350);
+		window.addEventListener("pagehide", save);
+		return () => {
+			window.clearTimeout(timer);
+			window.removeEventListener("pagehide", save);
+		};
+	}, [doc]);
 	const [exportOpen, setExportOpen] = useState(false);
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 300, height: 300 });
-  useEffect(() => {
-    const element = canvasRef.current!;
-    const observer = new ResizeObserver(() => setCanvasSize({ width: element.clientWidth - 8, height: element.clientHeight - 8 }));
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
+	const canvasRef = useRef<HTMLDivElement>(null);
+	const [canvasSize, setCanvasSize] = useState({ width: 300, height: 300 });
+	useEffect(() => {
+		const element = canvasRef.current!;
+		const observer = new ResizeObserver(() =>
+			setCanvasSize({
+				width: element.clientWidth - 8,
+				height: element.clientHeight - 8,
+			}),
+		);
+		observer.observe(element);
+		return () => observer.disconnect();
+	}, []);
 	const settings = doc.settings;
-  const boardWidth = Math.min(canvasSize.width, canvasSize.height * settings.columns / settings.rows);
+	const boardWidth = Math.min(
+		canvasSize.width,
+		(canvasSize.height * settings.columns) / settings.rows,
+	);
 	const patch = (patch: Partial<PatternSettings>) =>
 		dispatch({ type: "settings", patch });
 	const refresh = () => {
@@ -523,7 +570,8 @@ export default function App() {
 								data-testid="artboard"
 								style={{
 									width: boardWidth * zoom,
-                  height: boardWidth * settings.rows / settings.columns * zoom,
+									height:
+										((boardWidth * settings.rows) / settings.columns) * zoom,
 								}}
 							>
 								<div
@@ -609,7 +657,11 @@ export default function App() {
 							{(["columns", "rows"] as const).map((key) => (
 								<label key={key}>
 									{key === "columns" ? "Columns" : "Rows"}
-									<DimensionInput label={key === 'columns' ? 'Columns' : 'Rows'} value={settings[key]} onChange={n => patch({ [key]: n })} />
+									<DimensionInput
+										label={key === "columns" ? "Columns" : "Rows"}
+										value={settings[key]}
+										onChange={(n) => patch({ [key]: n })}
+									/>
 								</label>
 							))}
 						</div>
@@ -812,7 +864,9 @@ export default function App() {
 					}}
 				/>
 			)}
-			{exportOpen && <ExportDialog doc={doc} onClose={() => setExportOpen(false)} />}
+			{exportOpen && (
+				<ExportDialog doc={doc} onClose={() => setExportOpen(false)} />
+			)}
 		</div>
 	);
 }

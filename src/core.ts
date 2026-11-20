@@ -135,14 +135,26 @@ function validateSettings(settings: PatternSettings): void {
 	) {
 		throw new RangeError("Unknown pack or grid");
 	}
-	for (const [value, minimum] of [[settings.density, 5], [settings.opacity, 10]]) {
+	for (const [value, minimum] of [
+		[settings.density, 5],
+		[settings.opacity, 10],
+	]) {
 		if (!Number.isFinite(value) || value < minimum || value > 100)
-			throw new RangeError('Density and opacity must be within their ranges');
+			throw new RangeError("Density and opacity must be within their ranges");
 	}
-  if (settings.opacity % 5 !== 0) throw new RangeError('Opacity must use steps of 5');
-	if (!Number.isFinite(settings.spacing) || settings.spacing < 0 || settings.spacing > 100)
+	if (settings.opacity % 5 !== 0)
+		throw new RangeError("Opacity must use steps of 5");
+	if (
+		!Number.isFinite(settings.spacing) ||
+		settings.spacing < 0 ||
+		settings.spacing > 100
+	)
 		throw new RangeError("Spacing must be between 0 and 100");
-	if (!Number.isFinite(settings.rotation) || settings.rotation < 0 || settings.rotation > 360)
+	if (
+		!Number.isFinite(settings.rotation) ||
+		settings.rotation < 0 ||
+		settings.rotation > 360
+	)
 		throw new RangeError("Rotation must be between 0 and 360");
 }
 
@@ -337,11 +349,20 @@ export function reducer(doc: PatternDocument, action: Action): PatternDocument {
 				tiles: doc.tiles.map((tile) =>
 					tile.id === action.id
 						? {
-                ...tile, ...action.patch, id: tile.id,
-                partColors: action.patch.shapeId
-                  ? Array.from({ length: shapes.find(s => s.id === action.patch.shapeId)?.parts.length ?? 1 }, (_, i) => tile.partColors[i] ?? tile.colorIndex)
-                  : action.patch.partColors ?? tile.partColors,
-              }
+								...tile,
+								...action.patch,
+								id: tile.id,
+								partColors: action.patch.shapeId
+									? Array.from(
+											{
+												length:
+													shapes.find((s) => s.id === action.patch.shapeId)
+														?.parts.length ?? 1,
+											},
+											(_, i) => tile.partColors[i] ?? tile.colorIndex,
+										)
+									: (action.patch.partColors ?? tile.partColors),
+							}
 						: tile,
 				),
 			};

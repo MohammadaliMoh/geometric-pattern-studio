@@ -35,12 +35,18 @@ describe("pattern core", () => {
 				expect(part).toContain('fill="currentColor"');
 	});
 
-  it('normalizes part colors when replacing a motif and allows intermediate density', () => {
-    const doc = createDocument(42);
-    const edited = reducer(doc, { type: 'tile', id: doc.tiles[0].id, patch: { shapeId: 'basics-duo' } });
-    expect(edited.tiles[0].partColors).toHaveLength(2);
-    expect(() => reducer(doc, { type: 'settings', patch: { density: 67 } })).not.toThrow();
-  });
+	it("normalizes part colors when replacing a motif and allows intermediate density", () => {
+		const doc = createDocument(42);
+		const edited = reducer(doc, {
+			type: "tile",
+			id: doc.tiles[0].id,
+			patch: { shapeId: "basics-duo" },
+		});
+		expect(edited.tiles[0].partColors).toHaveLength(2);
+		expect(() =>
+			reducer(doc, { type: "settings", patch: { density: 67 } }),
+		).not.toThrow();
+	});
 
 	it("is deterministic and retains factors across appearance edits", () => {
 		const doc = createDocument(42);
