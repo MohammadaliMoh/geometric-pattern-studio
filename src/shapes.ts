@@ -1,5 +1,13 @@
-export type Pack = "Basics" | "Arcs" | "Angular" | "Playful";
-export const packs: Pack[] = ["Basics", "Arcs", "Angular", "Playful"];
+export type Pack =
+	"Connected" | "Tonal" | "Basics" | "Arcs" | "Angular" | "Playful";
+export const packs: Pack[] = [
+	"Connected",
+	"Tonal",
+	"Basics",
+	"Arcs",
+	"Angular",
+	"Playful",
+];
 
 export interface ShapeDefinition {
 	id: string;
@@ -8,8 +16,76 @@ export interface ShapeDefinition {
 	parts: string[];
 }
 
+function orientations(
+	id: string,
+	name: string,
+	pack: Pack,
+	parts: string[],
+): ShapeDefinition[] {
+	return [0, 90, 180, 270].map((angle) => ({
+		id: `${id}-${angle}`,
+		name: `${name} ${angle}°`,
+		pack,
+		parts: parts.map(
+			(part) => `<g transform="rotate(${angle} 50 50)">${part}</g>`,
+		),
+	}));
+}
+
+function tonalParts(path: string): string[] {
+	// Rotate a single quadrant around the tile; interiors never overlap.
+	return [1, 0.6, 0.4, 0.2].map(
+		(opacity, index) =>
+			`<path d="${path}" transform="rotate(${index * 90} 50 50)" fill="currentColor" opacity="${opacity}"/>`,
+	);
+}
+
 // Each motif is drawn in a 100 × 100 local coordinate system.
 export const shapes: ShapeDefinition[] = [
+	{
+		id: "connected-square",
+		name: "Square",
+		pack: "Connected",
+		parts: ['<rect width="100" height="100" fill="currentColor"/>'],
+	},
+	{
+		id: "connected-disc",
+		name: "Disc",
+		pack: "Connected",
+		parts: ['<circle cx="50" cy="50" r="50" fill="currentColor"/>'],
+	},
+	...orientations("connected-quarter", "Quarter-disc", "Connected", [
+		'<path d="M0 0H100A100 100 0 0 1 0 100Z" fill="currentColor"/>',
+	]),
+	...orientations("connected-semicircle", "Semicircle", "Connected", [
+		'<path d="M0 0H100A50 50 0 0 1 0 0Z" fill="currentColor"/>',
+	]),
+	// Two downward semicircles stack without overlap and span the full tile.
+	...orientations("connected-paired", "Paired semicircles", "Connected", [
+		'<path d="M0 0H100A50 50 0 0 1 0 0Z" fill="currentColor"/>',
+		'<path d="M0 50H100A50 50 0 0 1 0 50Z" fill="currentColor"/>',
+	]),
+	...orientations("connected-rounded", "Three rounded corners", "Connected", [
+		'<path d="M0 0H50A50 50 0 0 1 100 50A50 50 0 0 1 50 100A50 50 0 0 1 0 50Z" fill="currentColor"/>',
+	]),
+	...orientations(
+		"tonal-quarter",
+		"Tonal quarter-discs",
+		"Tonal",
+		tonalParts("M0 0H50A50 50 0 0 1 0 50Z"),
+	),
+	...orientations(
+		"tonal-triangle",
+		"Tonal triangles",
+		"Tonal",
+		tonalParts("M0 0H50L0 50Z"),
+	),
+	...orientations(
+		"tonal-lens",
+		"Tonal lenses",
+		"Tonal",
+		tonalParts("M0 0A50 50 0 0 1 50 50A50 50 0 0 1 0 0Z"),
+	),
 	{
 		id: "basics-disc",
 		name: "Disc",

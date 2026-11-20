@@ -40,10 +40,15 @@ export function renderTileContent(doc: PatternDocument, tile: Tile): string {
 			settings.spacing * (settings.randomSpacing ? tile.spacingFactor : 1),
 		),
 	);
-	const scale = 1 - (spacing / 100) * 0.8;
-	const rotation = settings.randomRotation
-		? tile.rotationFactor * 360
+	const geometric = shape.pack === "Connected" || shape.pack === "Tonal";
+	const angle = settings.randomRotation
+		? geometric
+			? Math.round(tile.rotationFactor * 360)
+			: tile.rotationFactor * 360
 		: settings.rotation;
+	const rotation = geometric ? ((angle % 360) + 360) % 360 : angle;
+	const scale =
+		(1 - (spacing / 100) * 0.8) * (geometric && rotation !== 0 ? 0.7 : 1);
 	const override =
 		tile.override?.kind === "custom"
 			? tile.override.color

@@ -28,8 +28,7 @@ export interface Tile {
 	rotationFactor: number;
 	spacingFactor: number;
 	override?:
-		| { kind: "palette"; index: number }
-		| { kind: "custom"; color: string };
+		{ kind: "palette"; index: number } | { kind: "custom"; color: string };
 }
 
 export interface PatternDocument {
@@ -49,9 +48,9 @@ export type Action =
 	| { type: "reset" };
 
 export const defaultSettings: PatternSettings = {
-	pack: "Basics",
-	rows: 6,
-	columns: 6,
+	pack: "Connected",
+	rows: 3,
+	columns: 4,
 	grid: "regular",
 	density: 100,
 	spacing: 0,
@@ -65,6 +64,11 @@ export const defaultSettings: PatternSettings = {
 };
 
 export const palettes = [
+	{
+		name: "Ink",
+		background: "#103BB9",
+		colors: ["#FFFFFF", "#011341"],
+	},
 	{
 		name: "Studio",
 		background: "#F5F2EB",
@@ -174,27 +178,47 @@ export function generateTiles(
 	const cells = new Int32Array(width * height).fill(-1);
 	const tiles: Tile[] = [];
 	const reserved: string[] = [];
-	// Scan half-cells so every placement has an exact, shared edge representation.
+	const baseCount = settings.rows * settings.columns;
+	const spans = new Float64Array(baseCount).fill(1);
+	if (settings.grid === "mixed") {
+		const shuffle = (items: number[]) => {
+			for (let i = items.length - 1; i > 0; i--) {
+				const j = Math.floor(rand() * (i + 1));
+				[items[i], items[j]] = [items[j], items[i]];
+			}
+			return items;
+		};
+		const origins = Array.from({ length: baseCount }, (_, i) => i).filter(
+			(i) =>
+				i % settings.columns < settings.columns - 1 &&
+				Math.floor(i / settings.columns) < settings.rows - 1,
+		);
+		let remaining = Math.floor(baseCount * 0.08);
+		for (const origin of shuffle(origins)) {
+			if (remaining === 0) break;
+			const region = [
+				origin,
+				origin + 1,
+				origin + settings.columns,
+				origin + settings.columns + 1,
+			];
+			if (!region.every((i) => spans[i] === 1)) continue;
+			for (const i of region) spans[i] = 0;
+			spans[origin] = 2;
+			remaining--;
+		}
+		const unmerged = Array.from({ length: baseCount }, (_, i) => i).filter(
+			(i) => spans[i] === 1,
+		);
+		for (const i of shuffle(unmerged).slice(0, Math.floor(baseCount * 0.2)))
+			spans[i] = 0.5;
+	}
+	// Half-cells give merged and subdivided tiles an exact shared-edge representation.
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
 			if (cells[y * width + x] !== -1) continue;
-			const fits = (size: number) =>
-				x + size <= width &&
-				y + size <= height &&
-				Array.from(
-					{ length: size * size },
-					(_, i) => cells[(y + Math.floor(i / size)) * width + x + (i % size)],
-				).every((id) => id === -1);
-			let span = 2;
-			if (settings.grid === "mixed") {
-				const choice = rand();
-				span =
-					choice < 0.23 && x % 4 === 0 && y % 4 === 0 && fits(4)
-						? 4
-						: choice < 0.46 || x % 2 !== 0 || y % 2 !== 0 || !fits(2)
-							? 1
-							: 2;
-			}
+			const span =
+				spans[Math.floor(y / 2) * settings.columns + Math.floor(x / 2)] * 2;
 			const id = tiles.length;
 			tiles.push({
 				id: `tile-${x}-${y}`,
@@ -211,7 +235,7 @@ export function generateTiles(
 				for (let dx = 0; dx < span; dx++) cells[(y + dy) * width + x + dx] = id;
 		}
 	}
-	// Largest first: aligned squares have at most four already-colored edge neighbors.
+	// Assign larger tiles first so smaller tiles can avoid their shared-edge neighbors.
 	for (const tile of [...tiles].sort((a, b) => b.size - a.size)) {
 		const neighbors = new Set<string>();
 		const x = tile.x * 2,
@@ -228,10 +252,26 @@ export function generateTiles(
 				if (index >= 0 && reserved[cells[index]])
 					neighbors.add(reserved[cells[index]]);
 		}
-		const candidates = settings.uniqueNeighbors
+		const diagonals = new Set<string>();
+		if (settings.grid === "regular" && motifs.length > 4 && y > 0) {
+			for (const dx of [-2, 2]) {
+				if (x + dx >= 0 && x + dx < width) {
+					const shapeId = reserved[cells[(y - 2) * width + x + dx]];
+					if (shapeId) diagonals.add(shapeId);
+				}
+			}
+		}
+		const edgeCandidates = settings.uniqueNeighbors
 			? motifs.filter((shape) => !neighbors.has(shape.id))
 			: motifs;
-		const available = candidates.length ? candidates : motifs;
+		const candidates = settings.uniqueNeighbors
+			? edgeCandidates.filter((shape) => !diagonals.has(shape.id))
+			: motifs;
+		const available = candidates.length
+			? candidates
+			: edgeCandidates.length
+				? edgeCandidates
+				: motifs;
 		const shape = available[Math.floor(rand() * available.length)];
 		reserved[cells[y * width + x]] = shape.id;
 		tile.shapeId = rand() * 100 < settings.density ? shape.id : null;

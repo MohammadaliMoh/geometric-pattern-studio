@@ -35,7 +35,7 @@ test("refresh, grid modes, numeric controls and stable appearance edits", async 
 		(await draft(page)).tiles.some((t: { size: number }) => t.size !== 1),
 	).toBe(true);
 	await page.getByRole("button", { name: "Regular grid", exact: true }).click();
-	await expect(page.getByRole("button", { name: /Edit tile/ })).toHaveCount(36);
+	await expect(page.getByRole("button", { name: /Edit tile/ })).toHaveCount(12);
 	await page
 		.getByRole("spinbutton", { name: "Columns", exact: true })
 		.fill("7");
@@ -76,9 +76,55 @@ test("refresh, grid modes, numeric controls and stable appearance edits", async 
 	expect(errors).toEqual([]);
 });
 
+test("geometric defaults, library counts, Tonal editing and reload", async ({
+	page,
+}) => {
+	const initial = await draft(page);
+	expect(initial.settings).toMatchObject({
+		pack: "Connected",
+		rows: 3,
+		columns: 4,
+	});
+	expect(initial.palette).toEqual({
+		background: "#103BB9",
+		colors: ["#FFFFFF", "#011341"],
+	});
+	await expect(page.locator(".panel-heading").first()).toContainText(
+		"62 motifs",
+	);
+	await expect(page.getByRole("button", { name: /^Connected/ })).toContainText(
+		"18 shapes",
+	);
+	const tonal = page.getByRole("button", { name: /^Tonal/ });
+	await expect(tonal).toContainText("12 shapes");
+	await tonal.click();
+	await page.getByRole("button", { name: "Edit tile 1", exact: true }).click();
+	await expect(page.locator(".motif-picker button")).toHaveCount(12);
+	await page
+		.getByRole("button", { name: "Tonal lenses 270°", exact: true })
+		.click();
+	await page.getByLabel("Custom tile hex").fill("#123456");
+	await page.getByLabel("Custom tile hex").blur();
+	await page.getByRole("button", { name: "Save tile" }).click();
+	const edited = await draft(page);
+	expect(edited.tiles[0]).toMatchObject({
+		shapeId: "tonal-lens-270",
+		override: { kind: "custom", color: "#123456" },
+	});
+	await page.reload();
+	expect((await draft(page)).tiles).toEqual(edited.tiles);
+	for (const opacity of [1, 0.6, 0.4, 0.2])
+		await expect(
+			page
+				.getByTestId("pattern-svg")
+				.locator(`[color="#123456"] [opacity="${opacity}"]`),
+		).toHaveCount(1);
+});
+
 test("tile save, cancel, clear, restore, palette overrides and reload", async ({
 	page,
 }) => {
+	await page.getByRole("button", { name: /^Basics/ }).click();
 	const tile = page.getByRole("button", { name: "Edit tile 1", exact: true });
 	await tile.focus();
 	await page.keyboard.press("Enter");
@@ -158,8 +204,12 @@ test("SVG XML and CSS match preview, transparency, clipboard fallback, PNG downl
 	await page.getByRole("button", { name: "Download PNG" }).click();
 	const png = await readFile((await (await pngDownload).path())!);
 	expect(png.readUInt32BE(16)).toBe(800);
-	expect(png.readUInt32BE(20)).toBe(800);
+	expect(png.readUInt32BE(20)).toBe(600);
 	expect(png[25]).toBe(6);
+	await page.getByRole("button", { name: "Close export", exact: true }).click();
+	await page.getByRole("spinbutton", { name: "Rows", exact: true }).fill("6");
+	await page.getByRole("button", { name: "Export", exact: true }).click();
+	await page.getByRole("button", { name: "PNG", exact: true }).click();
 	await page.getByRole("spinbutton", { name: "PNG width" }).fill("4096");
 	await expect(
 		page.getByRole("button", { name: "Download PNG" }),
@@ -186,7 +236,7 @@ test("Space refresh respects inputs, reset confirms, invalid storage recovers", 
 	expect((await draft(page)).settings.columns).toBe(9);
 	page.once("dialog", (dialog) => dialog.accept());
 	await page.getByRole("button", { name: "Reset to defaults" }).click();
-	expect((await draft(page)).settings.columns).toBe(6);
+	expect((await draft(page)).settings.columns).toBe(4);
 	await page.goto("about:blank");
 	await page.addInitScript(
 		(k) => localStorage.setItem(k, '{"version":99}'),
@@ -194,7 +244,7 @@ test("Space refresh respects inputs, reset confirms, invalid storage recovers", 
 	);
 	await page.goto("/");
 	await expect(page.getByRole("status")).toContainText("invalid");
-	await expect(page.getByRole("button", { name: /Edit tile/ })).toHaveCount(36);
+	await expect(page.getByRole("button", { name: /Edit tile/ })).toHaveCount(12);
 });
 
 test("desktop and mobile layouts keep artwork usable and keyboard accessible", async ({
@@ -204,7 +254,7 @@ test("desktop and mobile layouts keep artwork usable and keyboard accessible", a
 		await page.setViewportSize({ width, height: 1000 });
 		const board = await page.getByTestId("artboard").boundingBox();
 		expect(board!.width).toBeGreaterThan(250);
-		expect(Math.abs(board!.width - board!.height)).toBeLessThan(1);
+		expect(Math.abs(board!.width / board!.height - 4 / 3)).toBeLessThan(0.02);
 		expect(
 			await page.evaluate(() => document.documentElement.scrollWidth),
 		).toBe(width);

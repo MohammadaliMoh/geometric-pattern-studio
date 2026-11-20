@@ -26,10 +26,18 @@ function adjacent(a: Tile, b: Tile): boolean {
 }
 
 describe("pattern core", () => {
-	it("provides eight original motifs per pack and eight palettes", () => {
-		expect(palettes).toHaveLength(8);
-		expect(new Set(shapes.map((shape) => shape.id)).size).toBe(32);
-		for (const pack of packs) expect(getShapes(pack)).toHaveLength(8);
+	it("provides unique stable motifs and valid pack references", () => {
+		expect(new Set(palettes.map((palette) => palette.name)).size).toBe(
+			palettes.length,
+		);
+		expect(new Set(shapes.map((shape) => shape.id)).size).toBe(shapes.length);
+		expect(packs.slice(0, 2)).toEqual(["Connected", "Tonal"]);
+		for (const pack of packs) {
+			expect(getShapes(pack)).toHaveLength(
+				pack === "Connected" ? 18 : pack === "Tonal" ? 12 : 8,
+			);
+		}
+		for (const shape of shapes) expect(packs).toContain(shape.pack);
 		for (const shape of shapes)
 			for (const part of shape.parts)
 				expect(part).toContain('fill="currentColor"');
@@ -52,17 +60,22 @@ describe("pattern core", () => {
 		const doc = createDocument(42);
 		expect(createDocument(42)).toEqual(doc);
 		expect(doc.settings).toMatchObject({
-			rows: 6,
-			columns: 6,
+			pack: "Connected",
+			rows: 3,
+			columns: 4,
 			grid: "regular",
+			randomRotation: false,
+			randomSpacing: false,
+			multicolor: false,
+			uniqueNeighbors: true,
 			density: 100,
 			spacing: 0,
 			opacity: 100,
 			rotation: 0,
 		});
 		expect(doc.palette).toEqual({
-			background: "#F5F2EB",
-			colors: ["#3459D1", "#E19372", "#263D38"],
+			background: "#103BB9",
+			colors: ["#FFFFFF", "#011341"],
 		});
 		const refreshed = reducer(doc, { type: "refresh" });
 		expect(reducer(refreshed, { type: "reset" })).toEqual(
@@ -119,7 +132,12 @@ describe("pattern core", () => {
 	});
 
 	it("reserves neighbors even for empty tiles, keeping density independent of layout", () => {
-		const settings = { ...defaultSettings, grid: "mixed" as const };
+		const settings = {
+			...defaultSettings,
+			rows: 5,
+			columns: 7,
+			grid: "mixed" as const,
+		};
 		const full = generateTiles({ ...settings, density: 100 }, 15, 4);
 		const sparse = generateTiles({ ...settings, density: 45 }, 15, 4);
 		const empty = generateTiles({ ...settings, density: 5 }, 15, 4);
@@ -140,7 +158,7 @@ describe("pattern core", () => {
 	it("remaps every palette reference and preserves custom overrides", () => {
 		let doc = reducer(createDocument(42), {
 			type: "palette",
-			palette: palettes[1],
+			palette: palettes.find((palette) => palette.name === "Poolside")!,
 		});
 		doc = reducer(doc, {
 			type: "tile",
@@ -248,7 +266,7 @@ describe("exports", () => {
 		expect(content).not.toContain("<svg");
 		expect(renderTileContent(doc, { ...tile, shapeId: null })).toBe("");
 		const svg = renderSvg(doc);
-		expect(svg).toContain('viewBox="0 0 600 600"');
+		expect(svg).toContain('viewBox="0 0 400 300"');
 		expect(svg).toContain(doc.palette.background);
 		const transparent = {
 			...doc,
@@ -273,7 +291,12 @@ describe("exports", () => {
 
 	it("keeps maximum-spacing motifs visible and random factors override uniform rotation", () => {
 		const doc = createDocument(1);
-		const tile = { ...doc.tiles[0], rotationFactor: 0.125, spacingFactor: 0.5 };
+		const tile = {
+			...doc.tiles[0],
+			shapeId: "basics-disc",
+			rotationFactor: 0.125,
+			spacingFactor: 0.5,
+		};
 		doc.settings.spacing = 100;
 		doc.settings.rotation = 90;
 		let content = renderTileContent(doc, tile);
@@ -291,8 +314,8 @@ describe("exports", () => {
 
 	it("calculates PNG aspect ratio and enforces bounds and pixel limit", () => {
 		const doc = createDocument(1);
-		expect(pngDimensions(1000, doc)).toEqual({ width: 1000, height: 1000 });
-		doc.settings.rows = 3;
+		expect(pngDimensions(1000, doc)).toEqual({ width: 1000, height: 750 });
+		doc.settings.rows = 2;
 		expect(pngDimensions(1000, doc)).toEqual({ width: 1000, height: 500 });
 		for (const width of [99, 4097, NaN, 200.5])
 			expect(() => pngDimensions(width, doc)).toThrow();

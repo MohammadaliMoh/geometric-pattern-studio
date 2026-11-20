@@ -498,12 +498,12 @@ export default function App() {
 				<aside className="library">
 					<div className="panel-heading">
 						<h2>Shape library</h2>
-						<span>32 motifs</span>
+						<span>{shapes.length} motifs</span>
 					</div>
 					<p className="help">
-						A few simple shapes.
+						Connected edges, tonal layers,
 						<br />
-						Endless ways to play.
+						or a little decoration.
 					</p>
 					<div className="pack-list">
 						{packs.map((pack: Pack) => (
@@ -528,7 +528,8 @@ export default function App() {
 								<span className="pack-title">
 									{pack}
 									<span className="pack-count">
-										8 shapes {settings.pack === pack ? "●" : ""}
+										{shapes.filter((s) => s.pack === pack).length} shapes{" "}
+										{settings.pack === pack ? "●" : ""}
 									</span>
 								</span>
 							</button>
@@ -679,6 +680,8 @@ export default function App() {
 							onChange={(uniqueNeighbors) => patch({ uniqueNeighbors })}
 						/>
 						<p className="help layout-help">
+							Unique neighbors avoids touching shapes, including diagonals in
+							regular grids. Mixed sizes adds a few large and small tiles.
 							Layout changes, shape packs, and Refresh create a new pattern and
 							clear tile edits.
 						</p>

@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createDocument, type PatternDocument } from "./core";
+import {
+	createDocument,
+	generateTiles,
+	palettes,
+	reducer,
+	type PatternDocument,
+} from "./core";
 import { loadDraft, parseDraft, saveDraft, STORAGE_KEY } from "./persistence";
 
 const serialized = (edit: (doc: PatternDocument) => void) => {
@@ -11,6 +17,47 @@ const serialized = (edit: (doc: PatternDocument) => void) => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("draft validation", () => {
+	it("preserves legacy concrete layouts and palettes without regeneration", () => {
+		const doc = createDocument(123);
+		doc.settings = {
+			...doc.settings,
+			pack: "Basics",
+			rows: 6,
+			columns: 6,
+			grid: "mixed",
+		};
+		const studio = palettes.find((palette) => palette.name === "Studio")!;
+		doc.palette = { background: studio.background, colors: [...studio.colors] };
+		// A saved older layout can be much denser than the new mixed-layout target.
+		doc.tiles = generateTiles(
+			{ ...doc.settings, rows: 12, columns: 12, grid: "regular" },
+			321,
+			3,
+		).map((tile) => ({ ...tile, x: tile.x / 2, y: tile.y / 2, size: 0.5 }));
+		doc.tiles[0].override = { kind: "custom", color: "#123456" };
+		const restored = parseDraft(JSON.stringify(doc));
+		expect(restored).toEqual(doc);
+		expect(
+			reducer(restored, { type: "settings", patch: { spacing: 15 } }).tiles,
+		).toBe(restored.tiles);
+		expect(
+			reducer(restored, { type: "palette", palette: palettes[0] }).tiles.map(
+				({ x, y, size, shapeId }) => ({ x, y, size, shapeId }),
+			),
+		).toEqual(
+			doc.tiles.map(({ x, y, size, shapeId }) => ({ x, y, size, shapeId })),
+		);
+		expect(reducer(restored, { type: "refresh" }).tiles).not.toEqual(doc.tiles);
+	});
+
+	it.each(["Connected", "Tonal"] as const)("roundtrips %s drafts", (pack) => {
+		const doc = reducer(createDocument(987), {
+			type: "settings",
+			patch: { pack, grid: "mixed" },
+		});
+		expect(parseDraft(JSON.stringify(doc))).toEqual(doc);
+	});
+
 	it("roundtrips palette and custom overrides", () => {
 		const doc = createDocument(123);
 		doc.tiles[0].override = { kind: "palette", index: 1 };

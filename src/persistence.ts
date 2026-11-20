@@ -1,5 +1,5 @@
 import { createDocument, type PatternDocument } from "./core";
-import { shapes } from "./shapes";
+import { packs, shapes } from "./shapes";
 
 export const STORAGE_KEY = "form-study:draft";
 const MAX_DRAFT_LENGTH = 1_000_000;
@@ -25,7 +25,7 @@ export function parseDraft(raw: string): PatternDocument {
 	check(object(doc) && doc.version === 1 && integer(doc.seed, 0, 0xffffffff));
 	check(object(doc.settings));
 	const settings = doc.settings;
-	check(["Basics", "Arcs", "Angular", "Playful"].includes(settings.pack));
+	check(packs.includes(settings.pack));
 	check(integer(settings.rows, 2, 12) && integer(settings.columns, 2, 12));
 	check(settings.grid === "regular" || settings.grid === "mixed");
 	check(range(settings.density, 5, 100) && range(settings.spacing, 0, 100));

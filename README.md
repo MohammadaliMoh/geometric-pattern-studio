@@ -20,7 +20,9 @@ npm run preview
 
 ## Play
 
-- Pick one of four original eight-motif packs. Explore regular or mixed-size grids, density, spacing, rotation, opacity, and multicolor parts.
+- Start with Connected (18 edge-reaching geometric motifs) or Tonal (12 four-part opacity studies), or choose the decorative Basics, Arcs, Angular, and Playful packs. New patterns use a 3 × 4 Connected grid and the blue/white/navy Ink palette; existing drafts retain their settings and artwork.
+- Explore regular or mixed-size grids, density, spacing, rotation, opacity, and multicolor parts. Mixed layouts merge up to 8% of base cells as 2 × 2 regions and subdivide 20% of available base cells into quarters. Unique neighbors includes diagonals on regular grids and shared edges on mixed grids.
+- Connected and Tonal fit nonzero rotations at 70% scale before spacing, preserving their corners at arbitrary angles. Tonal keeps its internal opacity structure with one foreground color or a tile color override.
 - Layout changes (pack, dimensions, grid, density, neighbor rules) and Refresh clear tile edits. Appearance and palette changes preserve geometry. Random appearance factors stay stable while adjusting sliders.
 - Click a tile, or Tab to it and press Enter/Space, to change its motif or color. Save applies; Escape/Cancel discards. Clear leaves an empty, selectable tile. Choose Automatic to remove a manual color override.
 - Press Space outside interactive controls/dialogs to refresh. Zoom and Fit affect only the preview.
@@ -53,7 +55,7 @@ If Chromium cannot be downloaded, use an existing compatible Chrome/Chromium:
 PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/google-chrome npm run test:browser
 ```
 
-Unit tests cover deterministic generation, grid coverage/edge neighbors, stable edits, reference remapping, export helpers, and invalid/storage-failure recovery. Browser tests cover editing, palettes, layouts, keyboard use, reset, reload, valid SVG/XML, preview/export matching, CSS fallback/download, PNG size/alpha, and screenshots at 1440 and 390 px. Screenshots are written to `test-results/`.
+Unit tests cover deterministic generation, mixed-grid targets and coverage, edge/diagonal neighbors, tonal opacity, rotation fitting, stable edits, reference remapping, export helpers, legacy drafts, and invalid/storage-failure recovery. Browser tests cover editing, palettes, layouts, keyboard use, reset, reload, valid SVG/XML, preview/export matching, CSS fallback/download, PNG size/alpha, and screenshots at 1440 and 390 px. Geometric visual fixtures use seeds 42, 123, and 987, including monochrome, tonal, mixed-size, rotated compositions and a labeled motif atlas. Screenshots are written to `test-results/`.
 
 ## Code map
 
