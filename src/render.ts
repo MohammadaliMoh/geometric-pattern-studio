@@ -40,10 +40,10 @@ export function renderTileContent(doc: PatternDocument, tile: Tile): string {
 			settings.spacing * (settings.randomSpacing ? tile.spacingFactor : 1),
 		),
 	);
-	const scale = 1 - spacing / 100;
-	const rotation =
-		settings.rotation +
-		(settings.randomRotation ? Math.floor(tile.rotationFactor * 4) * 90 : 0);
+	const scale = 1 - (spacing / 100) * 0.8;
+	const rotation = settings.randomRotation
+		? tile.rotationFactor * 360
+		: settings.rotation;
 	const override =
 		tile.override?.kind === "custom"
 			? tile.override.color
@@ -75,7 +75,7 @@ export function renderSvg(doc: PatternDocument): string {
 }
 
 export function cssForDocument(doc: PatternDocument): string {
-	return `background-image: url("data:image/svg+xml,${encodeURIComponent(renderSvg(doc)).replace(/'/g, "%27")}");\nbackground-size: ${doc.settings.columns * 100}px ${doc.settings.rows * 100}px;\nbackground-repeat: repeat;`;
+	return `.pattern {\n  background-image: url("data:image/svg+xml,${encodeURIComponent(renderSvg(doc)).replace(/'/g, "%27")}");\n  background-size: ${doc.settings.columns * 100}px ${doc.settings.rows * 100}px;\n  background-repeat: repeat;\n}`;
 }
 
 export function pngDimensions(

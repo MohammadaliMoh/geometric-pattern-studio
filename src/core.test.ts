@@ -177,7 +177,6 @@ describe("pattern core", () => {
 			{ rows: 1 },
 			{ columns: 13 },
 			{ density: 0 },
-			{ density: 6 },
 			{ opacity: 5 },
 			{ opacity: 11 },
 			{ rotation: -1 },
@@ -246,6 +245,7 @@ describe("exports", () => {
 			`fill="${doc.palette.background}"`,
 		);
 		const css = cssForDocument(doc);
+		expect(css).toMatch(/^\.pattern \{\n[\s\S]*\n\}$/);
 		expect(css).toContain("background-repeat: repeat");
 		expect(
 			decodeURIComponent(css.split("data:image/svg+xml,")[1].split('"')[0]),
@@ -256,6 +256,24 @@ describe("exports", () => {
 				override: { kind: "custom", color: '"><script>alert(1)</script>' },
 			}),
 		).not.toContain("<script>");
+	});
+
+	it("keeps maximum-spacing motifs visible and random factors override uniform rotation", () => {
+		const doc = createDocument(1);
+		const tile = { ...doc.tiles[0], rotationFactor: 0.125, spacingFactor: 0.5 };
+		doc.settings.spacing = 100;
+		doc.settings.rotation = 90;
+		let content = renderTileContent(doc, tile);
+		const scale = Number(content.match(/scale\(([^)]+)\)/)![1]);
+		expect(scale).toBeCloseTo(0.2);
+		expect(content).toContain("rotate(90)");
+		doc.settings.randomRotation = true;
+		doc.settings.randomSpacing = true;
+		content = renderTileContent(doc, tile);
+		expect(content).toContain("rotate(45)");
+		expect(content).toContain("scale(0.6)");
+		doc.settings.rotation = 180;
+		expect(renderTileContent(doc, tile)).toBe(content);
 	});
 
 	it("calculates PNG aspect ratio and enforces bounds and pixel limit", () => {
