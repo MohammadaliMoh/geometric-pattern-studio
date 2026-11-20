@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useReducer, type ReactNode } from "react";
 import {
-	createDocument,
 	reducer,
 	palettes,
 	type PatternDocument,
@@ -9,6 +8,8 @@ import {
 } from "./core";
 import { packs, shapes, type Pack } from "./shapes";
 import { renderSvg } from "./render";
+import { loadDraft, saveDraft } from './persistence';
+import ExportDialog from './ExportDialog';
 
 function Icon({
 	name,
@@ -94,9 +95,11 @@ function NumberControl({
 	useEffect(() => setText(String(value)), [value]);
 	function commit() {
 		const n = Number(text);
-		if (text.trim() && Number.isFinite(n))
-			onChange(Math.max(min, Math.min(max, Math.round(n / step) * step)));
-		else setText(String(value));
+		if (text.trim() && Number.isFinite(n)) {
+      const next = Math.max(min, Math.min(max, Math.round(n / step) * step));
+      setText(String(next));
+      onChange(next);
+    } else setText(String(value));
 	}
 	return (
 		<div className={`number-control ${disabled ? "disabled" : ""}`}>
@@ -140,6 +143,15 @@ function NumberControl({
 			/>
 		</div>
 	);
+}
+function DimensionInput({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
+  const [text, setText] = useState(String(value));
+  useEffect(() => setText(String(value)), [value]);
+  const commit = () => {
+    const next = text.trim() ? Math.max(2, Math.min(12, Math.round(Number(text)))) : value;
+    if (Number.isFinite(next)) { setText(String(next)); onChange(next); } else setText(String(value));
+  };
+  return <input aria-label={label} type="number" min="2" max="12" value={text} onChange={e => { setText(e.target.value); const n = Number(e.target.value); if (Number.isInteger(n) && n >= 2 && n <= 12) onChange(n); }} onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') { commit(); e.currentTarget.blur(); } }} />;
 }
 function Toggle({
 	label,
@@ -344,12 +356,17 @@ function TileDialog({
 }
 
 export default function App() {
-	const [doc, dispatch] = useReducer(reducer, undefined, () =>
-		createDocument(),
-	);
+  const [initial] = useState(loadDraft);
+	const [doc, dispatch] = useReducer(reducer, initial.document);
 	const [selectedTile, setSelectedTile] = useState<string | null>(null);
 	const [zoom, setZoom] = useState(1);
-	const [status, setStatus] = useState("");
+	const [status, setStatus] = useState(initial.notice);
+  useEffect(() => {
+    const save = () => { const notice = saveDraft(doc); if (notice) setStatus(notice); };
+    const timer = window.setTimeout(save, 350);
+    window.addEventListener('pagehide', save);
+    return () => { window.clearTimeout(timer); window.removeEventListener('pagehide', save); };
+  }, [doc]);
 	const [exportOpen, setExportOpen] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [canvasSize, setCanvasSize] = useState({ width: 300, height: 300 });
@@ -592,18 +609,7 @@ export default function App() {
 							{(["columns", "rows"] as const).map((key) => (
 								<label key={key}>
 									{key === "columns" ? "Columns" : "Rows"}
-									<input
-										aria-label={key === "columns" ? "Columns" : "Rows"}
-										type="number"
-										min="2"
-										max="12"
-										value={settings[key]}
-										onChange={(e) => {
-											const n = Number(e.target.value);
-											if (Number.isInteger(n) && n >= 2 && n <= 12)
-												patch({ [key]: n });
-										}}
-									/>
+									<DimensionInput label={key === 'columns' ? 'Columns' : 'Rows'} value={settings[key]} onChange={n => patch({ [key]: n })} />
 								</label>
 							))}
 						</div>
@@ -806,20 +812,7 @@ export default function App() {
 					}}
 				/>
 			)}
-			{exportOpen && <PlaceholderExport onClose={() => setExportOpen(false)} />}
+			{exportOpen && <ExportDialog doc={doc} onClose={() => setExportOpen(false)} />}
 		</div>
-	);
-}
-function PlaceholderExport({ onClose }: { onClose: () => void }) {
-	const ref = useRef<HTMLDialogElement>(null);
-	useEffect(() => {
-		ref.current?.showModal();
-	}, []);
-	return (
-		<dialog ref={ref} onCancel={onClose}>
-			<h2>Export your pattern</h2>
-			<p>Export tools are being prepared.</p>
-			<button onClick={onClose}>Close</button>
-		</dialog>
 	);
 }

@@ -219,7 +219,8 @@ export function generateTiles(
 		const candidates = settings.uniqueNeighbors
 			? motifs.filter((shape) => !neighbors.has(shape.id))
 			: motifs;
-		const shape = candidates[Math.floor(rand() * candidates.length)];
+		const available = candidates.length ? candidates : motifs;
+		const shape = available[Math.floor(rand() * available.length)];
 		reserved[cells[y * width + x]] = shape.id;
 		tile.shapeId = rand() * 100 < settings.density ? shape.id : null;
 		tile.colorIndex = Math.floor(rand() * colorCount);

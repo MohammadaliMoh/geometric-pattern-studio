@@ -4,5 +4,6 @@ dist/
 playwright-report/
 test-results/
 *.tsbuildinfo
+.vitest/
 .pi*/
 ..playwright-mcp/
