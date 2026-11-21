@@ -38,7 +38,7 @@ The canvas comes first on small screens, with the shape library and editing cont
 
 ## Features
 
-- **62 geometric motifs across six shape packs**, from edge-reaching curves to decorative symbols.
+- **70 geometric motifs across eight shape packs**, from edge-reaching curves to decorative symbols.
 - **Regular and mixed-size grids**, with 2–12 rows and columns, adjustable density, and optional neighbor uniqueness.
 - **Color controls:** nine preset palettes, editable background, one to six foreground colors, multicolor motif parts, and per-tile color overrides.
 - **Shape controls:** spacing, rotation, opacity, and stable randomized spacing or rotation.
@@ -53,6 +53,8 @@ The canvas comes first on small screens, with the shape library and editing cont
 | ------------- | -----: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Connected** |     18 | Full-tile squares, discs, quarter-discs, edge-anchored semicircles, paired semicircles, and rounded forms. Designed to meet tile boundaries without built-in gutters. |
 | **Tonal**     |     12 | Quarter-disc, triangle, and lens compositions with four intrinsic opacity levels. Tonal detail remains visible with a single foreground color.                        |
+| **Truchet**   |      2 | Complementary curved bands form continuous paths and loops under the recommended aligned-grid settings.                                                               |
+| **Op Art**    |      6 | Straight and corner-curved stripes share a 10-unit width and 20-unit period; random boundaries need not connect.                                                      |
 | **Basics**    |      8 | Discs, split blocks, rings, steps, capsules, and other simple forms.                                                                                                  |
 | **Arcs**      |      8 | Arches, crescents, waves, fans, and petals.                                                                                                                           |
 | **Angular**   |      8 | Peaks, chevrons, bolts, diamonds, stairs, and other sharp-edged forms.                                                                                                |
@@ -98,10 +100,16 @@ The production files are generated in `dist/` and can be served by a static web 
 
 **Refresh generates a new composition and clears tile edits.** Changing the shape pack, dimensions, grid mode, density, or neighbor rules also regenerates tiles. Palette and appearance changes preserve tile placement and motif choices. Custom tile colors survive palette changes; choose **Automatic** in the tile editor to remove an override.
 
+### Truchet and Op Art
+
+Selecting either pack preserves your palette and controls. **Use recommended settings** explicitly applies a monochrome 8 × 8 regular grid: full density and opacity, no spacing or rotation, random spacing/rotation and multicolor off, opaque `#F5F5F3` background and one `#202423` foreground. It preserves the seed, regenerates once, and clears tile edits. Unique neighbors is off for Truchet and on for Op Art; Refresh still creates new variations.
+
+Truchet has matching 16-unit-wide ports at each edge midpoint. Paths connect across tiles and repeating export boundaries only with aligned, full-density, zero-spacing regular tiles. All controls remain editable: mixed sizes, density, spacing or rotation can intentionally disconnect paths, while different foreground colors or tile overrides can interrupt color continuity. Op Art creates optical rhythm, not guaranteed stripe continuity across every boundary.
+
 ### Layout behavior
 
 - **Mixed sizes** adds a restrained number of large and small tiles. At 3 × 4, it produces ten normal tiles and eight quarter-size tiles. Larger layouts can also include 2 × 2 merged tiles.
-- **Unique neighbors** avoids repeated motif IDs along shared edges, and along diagonals in regular grids. Directional variants count as distinct motifs; this is not an edge-matching solver.
+- **Unique neighbors** avoids repeated motif IDs along shared edges, and along diagonals in regular grids with more than four motifs. Directional variants count as distinct motifs; this is not an edge-matching solver.
 - **Connected and Tonal rotations** shrink nonzero rotations to 70% scale before applying spacing, keeping motif corners inside their tiles. The decorative packs retain their original rotation behavior.
 - Random appearance factors stay stable while you adjust controls. Refresh changes the underlying seeded composition.
 

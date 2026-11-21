@@ -232,6 +232,22 @@ h2 {
 .active .pack-count {
 	color: var(--blue);
 }
+.pack-guidance {
+	margin-top: 20px;
+	font-size: 11px;
+	line-height: 1.6;
+	color: var(--muted);
+}
+.pack-guidance button {
+	width: 100%;
+	margin: 12px 0;
+	padding: 9px;
+	font-size: 11px;
+	white-space: normal;
+}
+.pack-guidance p + p {
+	margin-top: 10px;
+}
 .studio-note {
 	margin-top: 52px;
 	padding: 22px 4px;

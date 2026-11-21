@@ -50,13 +50,16 @@ describe("draft validation", () => {
 		expect(reducer(restored, { type: "refresh" }).tiles).not.toEqual(doc.tiles);
 	});
 
-	it.each(["Connected", "Tonal"] as const)("roundtrips %s drafts", (pack) => {
-		const doc = reducer(createDocument(987), {
-			type: "settings",
-			patch: { pack, grid: "mixed" },
-		});
-		expect(parseDraft(JSON.stringify(doc))).toEqual(doc);
-	});
+	it.each(["Connected", "Tonal", "Truchet", "Op Art"] as const)(
+		"roundtrips %s drafts",
+		(pack) => {
+			const doc = reducer(createDocument(987), {
+				type: "settings",
+				patch: { pack, grid: "mixed" },
+			});
+			expect(parseDraft(JSON.stringify(doc))).toEqual(doc);
+		},
+	);
 
 	it("roundtrips palette and custom overrides", () => {
 		const doc = createDocument(123);

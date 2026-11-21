@@ -64,7 +64,7 @@ describe("geometric generation", () => {
 		expect(hasOddMergeOrigin).toBe(true);
 	});
 
-	it("avoids regular-grid edge and diagonal neighbors for every pack", () => {
+	it("avoids regular-grid edge neighbors and diagonals when the pack has enough motifs", () => {
 		for (const pack of library.packs) {
 			for (const seed of [42, 123, 987]) {
 				const settings = { ...defaultSettings, pack, rows: 12, columns: 12 };
@@ -74,7 +74,10 @@ describe("geometric generation", () => {
 						if (
 							other !== tile &&
 							Math.abs(other.x - tile.x) <= 1 &&
-							Math.abs(other.y - tile.y) <= 1
+							Math.abs(other.y - tile.y) <= 1 &&
+							(library.getShapes(pack).length > 4 ||
+								other.x === tile.x ||
+								other.y === tile.y)
 						)
 							expect(tile.shapeId).not.toBe(other.shapeId);
 					}

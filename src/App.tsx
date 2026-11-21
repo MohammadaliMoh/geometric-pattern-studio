@@ -505,6 +505,34 @@ export default function App() {
 						<br />
 						or a little decoration.
 					</p>
+					{(settings.pack === "Truchet" || settings.pack === "Op Art") && (
+						<div className="pack-guidance">
+							<p>
+								{settings.pack === "Truchet"
+									? "Two curved tiles form continuous paths and loops on an aligned, full-density regular grid with no spacing."
+									: "Straight and curved stripes share a steady rhythm. Random combinations do not guarantee continuous stripes at every boundary."}
+							</p>
+							<button
+								onClick={() => {
+									dispatch({ type: "recommended" });
+									setStatus(
+										"Recommended settings applied. Composition regenerated; tile edits cleared.",
+									);
+								}}
+							>
+								Use recommended settings
+							</button>
+							<p>
+								Applies a monochrome 8 × 8 grid, regenerates the composition and
+								clears tile edits. Keeps your seed.
+							</p>
+							<p>
+								{settings.pack === "Truchet"
+									? "All controls stay editable. Mixed sizes, density, spacing or rotation can intentionally disconnect paths; multiple colors and tile edits can change color at boundaries."
+									: "All controls and tile editing stay available. Try spacing, rotation or multiple colors for a different rhythm."}
+							</p>
+						</div>
+					)}
 					<div className="pack-list">
 						{packs.map((pack: Pack) => (
 							<button

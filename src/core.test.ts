@@ -34,7 +34,15 @@ describe("pattern core", () => {
 		expect(packs.slice(0, 2)).toEqual(["Connected", "Tonal"]);
 		for (const pack of packs) {
 			expect(getShapes(pack)).toHaveLength(
-				pack === "Connected" ? 18 : pack === "Tonal" ? 12 : 8,
+				pack === "Connected"
+					? 18
+					: pack === "Tonal"
+						? 12
+						: pack === "Truchet"
+							? 2
+							: pack === "Op Art"
+								? 6
+								: 8,
 			);
 		}
 		for (const shape of shapes) expect(packs).toContain(shape.pack);

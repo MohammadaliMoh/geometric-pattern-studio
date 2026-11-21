@@ -1,8 +1,17 @@
 export type Pack =
-	"Connected" | "Tonal" | "Basics" | "Arcs" | "Angular" | "Playful";
+	| "Connected"
+	| "Tonal"
+	| "Truchet"
+	| "Op Art"
+	| "Basics"
+	| "Arcs"
+	| "Angular"
+	| "Playful";
 export const packs: Pack[] = [
 	"Connected",
 	"Tonal",
+	"Truchet",
+	"Op Art",
 	"Basics",
 	"Arcs",
 	"Angular",
@@ -40,8 +49,46 @@ function tonalParts(path: string): string[] {
 	);
 }
 
+function quarterAnnulus(inner: number, outer: number): string {
+	return `M${outer} 0A${outer} ${outer} 0 0 1 0 ${outer}L0 ${inner}A${inner} ${inner} 0 0 0 ${inner} 0Z`;
+}
+
 // Each motif is drawn in a 100 × 100 local coordinate system.
 export const shapes: ShapeDefinition[] = [
+	...[0, 90].map((angle, index) => ({
+		id: `truchet-${index === 0 ? "a" : "b"}`,
+		name: `Truchet ${index === 0 ? "A" : "B"}`,
+		pack: "Truchet" as const,
+		parts: [angle, angle + 180].map(
+			(rotation) =>
+				`<path d="${quarterAnnulus(42, 58)}" transform="rotate(${rotation} 50 50)" fill="currentColor"/>`,
+		),
+	})),
+	{
+		id: "op-art-horizontal",
+		name: "Horizontal bands",
+		pack: "Op Art",
+		parts: [
+			`<path d="${[5, 25, 45, 65, 85].map((y) => `M0 ${y}h100v10H0Z`).join("")}" fill="currentColor"/>`,
+		],
+	},
+	{
+		id: "op-art-vertical",
+		name: "Vertical bands",
+		pack: "Op Art",
+		parts: [
+			`<path d="${[5, 25, 45, 65, 85].map((x) => `M${x} 0h10v100H${x}Z`).join("")}" fill="currentColor"/>`,
+		],
+	},
+	...[0, 90, 180, 270].map((angle) => ({
+		id: `op-art-corner-${angle}`,
+		name: `Corner bands ${angle}°`,
+		pack: "Op Art" as const,
+		parts: [
+			`<path d="${[5, 25, 45, 65, 85].map((inner) => quarterAnnulus(inner, inner + 10)).join("")}" transform="rotate(${angle} 50 50)" fill="currentColor"/>`,
+		],
+	})),
+
 	{
 		id: "connected-square",
 		name: "Square",

@@ -90,7 +90,7 @@ test("geometric defaults, library counts, Tonal editing and reload", async ({
 		colors: ["#FFFFFF", "#011341"],
 	});
 	await expect(page.locator(".panel-heading").first()).toContainText(
-		"62 motifs",
+		"70 motifs",
 	);
 	await expect(page.getByRole("button", { name: /^Connected/ })).toContainText(
 		"18 shapes",

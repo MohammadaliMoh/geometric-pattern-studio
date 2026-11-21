@@ -28,7 +28,8 @@ export interface Tile {
 	rotationFactor: number;
 	spacingFactor: number;
 	override?:
-		{ kind: "palette"; index: number } | { kind: "custom"; color: string };
+		| { kind: "palette"; index: number }
+		| { kind: "custom"; color: string };
 }
 
 export interface PatternDocument {
@@ -42,6 +43,7 @@ export interface PatternDocument {
 export type Action =
 	| { type: "settings"; patch: Partial<PatternSettings> }
 	| { type: "refresh" }
+	| { type: "recommended" }
 	| { type: "palette"; palette: PatternDocument["palette"] }
 	| { type: "tile"; id: string; patch: Partial<Tile> }
 	| { type: "removeColor"; index: number }
@@ -339,6 +341,24 @@ export function removeColor(
 
 export function reducer(doc: PatternDocument, action: Action): PatternDocument {
 	switch (action.type) {
+		case "recommended": {
+			if (doc.settings.pack !== "Truchet" && doc.settings.pack !== "Op Art")
+				return doc;
+			const settings: PatternSettings = {
+				...defaultSettings,
+				pack: doc.settings.pack,
+				rows: 8,
+				columns: 8,
+				uniqueNeighbors: doc.settings.pack === "Op Art",
+			};
+			const palette = { background: "#F5F5F3", colors: ["#202423"] };
+			return {
+				...doc,
+				settings,
+				palette,
+				tiles: generateTiles(settings, doc.seed, palette.colors.length),
+			};
+		}
 		case "settings": {
 			const settings = { ...doc.settings, ...action.patch };
 			validateSettings(settings);
